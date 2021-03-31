@@ -51,32 +51,40 @@ def createtable(tablename,host,user,password,database):
 
 def run_mysql(tablename,host,user,password,database):
 
-    mysql_cmd=f'mysql -u {user} -p{password} {database} -h {host} -e "LOAD DATA LOCAL INFILE \'/dev/stdin\' ignore INTO TABLE {tablename} FIELDS TERMINATED BY \',\' lines terminated by \'\\n\';"'
+    mysql_cmd=f'mysql -u {user} -p{password} {database} -h {host} -e "LOAD DATA LOCAL INFILE \'/dev/stdin\' ignore INTO TABLE {tablename} FIELDS TERMINATED BY \'\\t\' lines terminated by \'\\n\';"'
     print(mysql_cmd)
     mysqlprocess=subprocess.Popen(mysql_cmd,shell=True,stdin=subprocess.PIPE)
     return mysqlprocess
+import datetime
 def run_tshark(filename,mysqlprocess):
-    tshark_cmd=f"tshark -r {filename} -E separator=, -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e _ws.col.Protocol -e ip.ttl -e ip.version -e eth.src -e eth.dst"
+    tshark_cmd=f"tshark -r {filename} -E occurrence=f -E separator=/t -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e _ws.col.Protocol -e ip.ttl -e ip.version -e eth.src -e eth.dst"
     print(tshark_cmd)
     tsharkprocess=subprocess.Popen(tshark_cmd,shell=True,stdout=subprocess.PIPE)
     while 1:
         buf=tsharkprocess.stdout.readline()
         if not buf:
             break
-        arr=buf.split(b',')
-        hop=0
-        if arr[6]:
-            ttl=int(arr[6])
-            if ttl <= 32:
-                hop = 33 - ttl
-            elif ttl <= 64:
-                hop = 65 - ttl
-            elif ttl <= 128:
-                hop = 129 - ttl
-            elif ttl <= 255:
-                hop = 256 - ttl
-        s=b','.join([str(hop).encode(),b'']+arr)
-        mysqlprocess.stdin.write(s)
+        try:
+            arr=buf.split(b'\t')
+            print(arr)
+            hop=0
+            arr[1] = str(datetime.datetime.fromtimestamp(float(arr[1])).strftime("%Y-%m-%d %H:%m:%S")).encode()
+            if arr[6]:
+                ttl=int(arr[6])
+                if ttl <= 32:
+                    hop = 33 - ttl
+                elif ttl <= 64:
+                    hop = 65 - ttl
+                elif ttl <= 128:
+                    hop = 129 - ttl
+                elif ttl <= 255:
+                    hop = 256 - ttl
+            s=b'\t'.join([str(hop).encode(),b'']+arr)
+            mysqlprocess.stdin.write(s)
+        except Exception as e:
+            print(e)
+            print(arr)
+
 
 def main():
     filename=sys.argv[1]
