@@ -53,10 +53,7 @@ async def run_mysql(tablename,host,user,password,database):
     print(mysql_cmd)
     #mysqlprocess=await asyncio.create_subprocess_shell(mysql_cmd,stdin=asyncio.subprocess.PIPE)
     mysqlprocess=subprocess.Popen(mysql_cmd,shell=True,stdin=subprocess.PIPE)
-
     return mysqlprocess
-
-
 async def run_tshark(filename,mysqlprocess):
     tshark_cmd=f"tshark -r {filename} -E separator=, -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e _ws.col.Protocol -e ip.ttl -e ip.version -e eth.src -e eth.dst"
     print(tshark_cmd)
@@ -78,7 +75,6 @@ async def run_tshark(filename,mysqlprocess):
             elif ttl <= 255:
                 hop = 256 - ttl
         s=b','.join([str(hop).encode(),b'']+arr)
-
         mysqlprocess.stdin.write(s)
 
 def main():
@@ -96,9 +92,7 @@ def main():
     loop=asyncio.get_event_loop()
     loop.run_until_complete(createtable(tablename,host,user,password,database))
     mysqlprocess=loop.run_until_complete(run_mysql(tablename,host,user,password,database))
-   # tasks=[]
     loop.run_until_complete(run_tshark(filename,mysqlprocess))
-
     mysqlprocess.stdin.close()
     while mysqlprocess.poll() is None:
          time.sleep(0.2)
