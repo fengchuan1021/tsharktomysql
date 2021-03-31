@@ -1,6 +1,6 @@
 import sys
-import aiomysql
-import asyncio
+import pymysql
+import subprocess
 import time
 
 def getlayer_level(packet):
@@ -15,8 +15,12 @@ def getlayer_level(packet):
             return '链路层'
 
         return "应用层"
-async def createtable(tablename,host,user,password,database):
-    db = await aiomysql.create_pool(host=host, port=3306,user=user, password=password,db=database, charset="utf8", autocommit=True)
+def createtable(tablename,host,user,password,database):
+    connection = pymysql.connect(host=host,
+                                 user=user,
+                                 password=password,
+                                 database=database,autocommit=True)
+    cur=connection.cursor()
     create_table_sql=f'''
         CREATE TABLE if not exists `{tablename}`  (
            `hop` int(11) NOT NULL,
@@ -41,25 +45,22 @@ async def createtable(tablename,host,user,password,database):
           INDEX `hop`(`hop`) USING BTREE
         ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
     '''
-    async with db.acquire() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(create_table_sql)
-    db.close()
-    await db.wait_closed()
-import subprocess
-async def run_mysql(tablename,host,user,password,database):
+    cur.execute(create_table_sql)
+    cur.close()
+    connection.close()
+
+def run_mysql(tablename,host,user,password,database):
 
     mysql_cmd=f'mysql -u {user} -p{password} {database} -h {host} -e "LOAD DATA LOCAL INFILE \'/dev/stdin\' ignore INTO TABLE {tablename} FIELDS TERMINATED BY \',\' lines terminated by \'\\n\';"'
     print(mysql_cmd)
-    #mysqlprocess=await asyncio.create_subprocess_shell(mysql_cmd,stdin=asyncio.subprocess.PIPE)
     mysqlprocess=subprocess.Popen(mysql_cmd,shell=True,stdin=subprocess.PIPE)
     return mysqlprocess
-async def run_tshark(filename,mysqlprocess):
+def run_tshark(filename,mysqlprocess):
     tshark_cmd=f"tshark -r {filename} -E separator=, -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e _ws.col.Protocol -e ip.ttl -e ip.version -e eth.src -e eth.dst"
     print(tshark_cmd)
-    tsharkprocess=await asyncio.create_subprocess_shell(tshark_cmd,stdout=asyncio.subprocess.PIPE)
+    tsharkprocess=subprocess.Popen(tshark_cmd,shell=True,stdout=subprocess.PIPE)
     while 1:
-        buf=await tsharkprocess.stdout.readline()
+        buf=tsharkprocess.stdout.readline()
         if not buf:
             break
         arr=buf.split(b',')
@@ -89,10 +90,9 @@ def main():
         user=sys.argv[4]
         password=sys.argv[5]
         database=sys.argv[6]
-    loop=asyncio.get_event_loop()
-    loop.run_until_complete(createtable(tablename,host,user,password,database))
-    mysqlprocess=loop.run_until_complete(run_mysql(tablename,host,user,password,database))
-    loop.run_until_complete(run_tshark(filename,mysqlprocess))
+    createtable(tablename,host,user,password,database)
+    mysqlprocess=run_mysql(tablename,host,user,password,database)
+    run_tshark(filename,mysqlprocess)
     mysqlprocess.stdin.close()
     while mysqlprocess.poll() is None:
          time.sleep(0.2)
