@@ -57,9 +57,8 @@ async def run_mysql(tablename,host,user,password,database):
     return mysqlprocess
 
 
-async def run_tshark(filename,mysqlprocess,size,processnum):
-
-    tshark_cmd=f"tshark -r {filename} -Y 'frame.number > {size*processnum} && frame.number <= {size*processnum+size}' -E separator=, -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e _ws.col.Protocol -e ip.ttl -e ip.version -e eth.src -e eth.dst"
+async def run_tshark(filename,mysqlprocess):
+    tshark_cmd=f"tshark -r {filename} -E separator=, -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e _ws.col.Protocol -e ip.ttl -e ip.version -e eth.src -e eth.dst"
     print(tshark_cmd)
     tsharkprocess=await asyncio.create_subprocess_shell(tshark_cmd,stdout=asyncio.subprocess.PIPE)
     while 1:
@@ -81,10 +80,7 @@ async def run_tshark(filename,mysqlprocess,size,processnum):
         s=b','.join([str(hop).encode(),b'']+arr)
 
         mysqlprocess.stdin.write(s)
-async def getpcapsize(filename):
-    p= await asyncio.create_subprocess_shell(f"capinfos -Trb -c {filename}", stdout=asyncio.subprocess.PIPE)
-    return int((await p.stdout.read()).split(b' ')[1])
-import math
+
 def main():
     filename=sys.argv[1]
     tablename=sys.argv[2]
@@ -92,20 +88,17 @@ def main():
     user="fengchuan"
     password="bOelm#Fb2aX"
     database="topo_p2p"
-
     if len(sys.argv)>3:
         host=sys.argv[3]
         user=sys.argv[4]
         password=sys.argv[5]
         database=sys.argv[6]
-    processnum = int(sys.argv[6]) if len(sys.argv) > 6 else 2
     loop=asyncio.get_event_loop()
-    stask=loop.create_task(getpcapsize(filename))
     loop.run_until_complete(createtable(tablename,host,user,password,database))
     mysqlprocess=loop.run_until_complete(run_mysql(tablename,host,user,password,database))
-    size=math.ceil(loop.run_until_complete(stask)/processnum)
-    tasks=[run_tshark(filename,mysqlprocess,size,i) for i in range(processnum)]#2个进程同时解析
-    loop.run_until_complete(asyncio.wait(tasks))
+   # tasks=[]
+    loop.run_until_complete(run_tshark(filename,mysqlprocess))
+
     mysqlprocess.stdin.close()
     while mysqlprocess.poll() is None:
          time.sleep(0.2)
