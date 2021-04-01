@@ -2,7 +2,7 @@ import sys
 import pymysql
 import subprocess
 import time
-import datetime
+
 
 
 def getlayer_level(packet):
@@ -62,7 +62,7 @@ def run_mysql(tablename, host, user, password, database):
 
 
 def run_tshark(filename, mysqlprocess):
-    tshark_cmd = f"tshark -r {filename} -E occurrence=f -E separator=/t -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e _ws.col.Protocol -e ip.ttl -e ip.version -e eth.src -e eth.dst"
+    tshark_cmd = f"tshark -r {filename} -E occurrence=f -E separator=/t -t ad -T fields -e frame.number -e _ws.col.Time -e frame.len -e ip.src -e ip.dst -e _ws.col.Protocol -e ip.ttl -e ip.version -e eth.src -e eth.dst"
     print(tshark_cmd)
     tsharkprocess = subprocess.Popen(tshark_cmd, shell=True, stdout=subprocess.PIPE)
     while 1:
@@ -73,7 +73,7 @@ def run_tshark(filename, mysqlprocess):
             arr = buf.split(b'\t')
             print(arr)
             hop = 1
-            arr[1] = str(datetime.datetime.fromtimestamp(float(arr[1])).strftime("%Y-%m-%d %H:%m:%S")).encode()
+            #arr[1] = str(datetime.datetime.fromtimestamp(float(arr[1])).strftime("%Y-%m-%d %H:%m:%S")).encode()
 
             if not arr[3]:
                 arr[3]=b'\\N'
