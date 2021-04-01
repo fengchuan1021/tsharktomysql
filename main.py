@@ -74,6 +74,9 @@ def run_tshark(filename, mysqlprocess):
             print(arr)
             hop = 1
             arr[1] = str(datetime.datetime.fromtimestamp(float(arr[1])).strftime("%Y-%m-%d %H:%m:%S")).encode()
+
+            if not arr[3]:
+                arr[3]=b'\\N'
             if arr[6]:
                 ttl = int(arr[6])
                 if ttl <= 32:
@@ -119,30 +122,29 @@ def insert(arg:Arg):
 class Qarg(BaseModel):
     file_path: str
     index: int
-import pyshark
+
 def query_function(filepath,index):
-    caps=pyshark.FileCapture(filepath)
-    def getlayer(obj):
-
-        if hasattr(obj,'layers'):
-            tmparr = []
-            for layer in obj.layers:
-                obj={'label':layer.layer_name.upper()+' Layer'}
-                t=getlayer(layer)
-                if t:
-                    obj['children']=t
-                tmparr.append(obj)
-            return tmparr
+    cmd=f'tshark -r {filepath} -Y "frame.number=={index}" -V -T text'
+    tsharkprocess = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,encoding='utf-8')
+    out,error=tsharkprocess.communicate()
+    arr=[]
+    dic={}
+    s=''
+    for line in out.splitlines():
+        if not line.strip():
+            continue
+        if not line.startswith('    '):
+            if s:
+                dic['children']={'title':s}
+                arr.append(dic)
+                s=''
+                dic={}
+            dic['title']=line
         else:
-            s=''
-            if obj.layer_name == obj.DATA_LAYER:
-                s='DATA'
-            for field_line in obj._get_all_field_lines():
-                s += field_line
-            return [{'label':'<pre>'+s.replace('\t','')+'</pre>'}]
-
-    tmpdata=getlayer(caps[index])
-    retarr={'status':200,'data':tmpdata}
+            s+=line+"\n"
+    dic['children']={'title':s}
+    arr.append(dic)
+    retarr={'status':200,'data':arr}
     return retarr
 @app.post('/query')
 def query(arg:Qarg):
