@@ -40,14 +40,16 @@ def createtable(tablename, host, user, password, database):
           `version` int(11) NOT NULL,
           `srcmac` varchar(18) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
           `dstmac` varchar(18) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-
-
-
           PRIMARY KEY (`id`) USING BTREE,
           INDEX `ip`(`srcip`) USING BTREE,
           INDEX `proto`(`proto_name`) USING BTREE,
           INDEX `hop`(`hop`) USING BTREE
         ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
+        CREATE TABLE `{tablename}_cache`  (
+          `id` int(11) NOT NULL,
+          `layers` text CHARACTER SET utf8 COLLATE utf8_general_ci NULL,
+          PRIMARY KEY (`id`) USING BTREE
+        ) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
     '''
     cur.execute(create_table_sql)
     cur.close()
@@ -93,30 +95,52 @@ def run_tshark(filename, mysqlprocess):
             print(e)
             print(arr)
 
-
+host = "192.168.1.36"
+user = "fengchuan"
+password = "bOelm#Fb2aX"
+database = "topo_p2p"
 def insert_function(filename,tablename):
 
-    host = "192.168.1.36"
-    user = "fengchuan"
-    password = "bOelm#Fb2aX"
-    database = "topo_p2p"
     createtable(tablename, host, user, password, database)
     mysqlprocess = run_mysql(tablename, host, user, password, database)
     run_tshark(filename, mysqlprocess)
     mysqlprocess.stdin.close()
     while mysqlprocess.poll() is None:
-        time.sleep(0.2)
+        time.sleep(0.1)
 
 from pydantic import BaseModel
-from fastapi import FastAPI
+from fastapi import BackgroundTasks, FastAPI
 class Arg(BaseModel):
     file_path: str
     tablename: str
 
+
+
 app = FastAPI()
+def process_layer_data(filepath:str,tablename:str):
+    tablename=tablename+'_cache'
+    mysqlprocess = run_mysql(tablename, host, user, password, database)
+    t1cmd = f"tshark -r {filepath} -V -T text"
+    t1 = subprocess.Popen(t1cmd, shell=True, stdout=subprocess.PIPE)
+
+    while 1:
+        b1=t1.stdout.readline().strip('\n')
+        arr=[{'title':f'{item.upper()} layer','children':[{'title':''}]} for item in b1.split(';') if item!='data']
+        l=len(arr)
+        i=0
+        while 1:
+            b2=t2.stdout.readline()
+            if not b2.startswith("    "):
+                if b2.startswith("Data"):
+
+            if b2.startswith("Data") or b2.startswith("    "):
+
+
+
 @app.post('/insert')
-def insert(arg:Arg):
+def insert(arg:Arg, background_tasks: BackgroundTasks):
     insert_function(arg.file_path,arg.tablename)
+    background_tasks.add_task(process_layer_data, arg.file_path,arg.tablename)
     return {'status': 200, 'msg':'ok'}
 
 class Qarg(BaseModel):
@@ -134,6 +158,8 @@ def query_function(filepath,index):
         if not line.strip():
             continue
         if not line.startswith('    '):
+            if line.startswith("Data"):
+                break
             if s:
                 dic['children']={'title':s}
                 arr.append(dic)
@@ -141,6 +167,7 @@ def query_function(filepath,index):
                 dic={}
             dic['title']=line
         else:
+
             s+=line+"\n"
     dic['children']={'title':s}
     arr.append(dic)
