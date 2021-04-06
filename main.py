@@ -3,6 +3,10 @@ import pymysql
 import subprocess
 import time
 
+host = "192.168.1.92"
+user = "root"
+password = "123456"
+database = "db_net_topology"
 
 def getlayer_level(packet):
     for layer in packet.layers[::-1]:
@@ -99,10 +103,7 @@ def run_tshark(filename, mysqlprocess):
 
 
 def insert_function(filename, tablename):
-    host = "192.168.1.92"
-    user = "root"
-    password = "123456"
-    database = "db_net_topology"
+
     createtable(tablename, host, user, password, database)
     mysqlprocess = run_mysql(tablename, host, user, password, database)
     run_tshark(filename, mysqlprocess)
@@ -118,6 +119,7 @@ from fastapi import BackgroundTasks, FastAPI
 class Qarg(BaseModel):
     file_path: str
     index: int
+    tablename:str=None
 
 
 import json
@@ -180,7 +182,17 @@ def process_layer_data(filepath: str, tablename: str):
         time.sleep(0.1)
 
 
-def query_function(filepath, index):
+def query_function(filepath, index,tablename):
+    if tablename:
+        connection = pymysql.connect(host=host,
+                                     user=user,
+                                     password=password,
+                                     database=database, autocommit=True)
+        cur = connection.cursor()
+        cur.execute(f"select layers from {tablename}_cache where id={index}")
+        ret=cur.fetchone()
+        if ret:
+            return {'status': 200, 'data': ret[0]}
     cmd = f'tshark -r {filepath} -Y "frame.number=={index}" -V -T text'
     tsharkprocess = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, encoding='utf-8')
     out, error = tsharkprocess.communicate()
@@ -216,20 +228,16 @@ class Arg(BaseModel):
     file_path: str
     tablename: str
 
-
 app = FastAPI()
-
-
 @app.post('/insert')
 def insert(arg: Arg, background_tasks: BackgroundTasks):
     insert_function(arg.file_path, arg.tablename)
     background_tasks.add_task(process_layer_data, arg.file_path, arg.tablename)
     return {'status': 200, 'msg': 'ok'}
 
-
 @app.post('/query')
 def query(arg: Qarg):
-    return query_function(arg.file_path, arg.index)
+    return query_function(arg.file_path, arg.index,arg.tablename)
 
 
 
