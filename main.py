@@ -15,7 +15,7 @@ if os.getenv('host'):
     user = os.getenv('user')
     password = os.getenv('password')
     database = os.getenv('database')
-    port = os.getenv('port')
+    port = int(os.getenv('port'))
 
 def getlayer_level(packet):
     for layer in packet.layers[::-1]:
