@@ -4,11 +4,18 @@ import time
 from pydantic import BaseModel
 from fastapi import BackgroundTasks, FastAPI
 import json
+import os
 host = "192.168.1.36"
 user = "fengchuan"
 password = "bOelm#Fb2aX"
 database = "topo_p2p"
 port = 3306
+if os.getenv('host'):
+    host = os.getenv('host')
+    user = os.getenv('user')
+    password = os.getenv('password')
+    database = os.getenv('database')
+    port = os.getenv('port')
 
 def getlayer_level(packet):
     for layer in packet.layers[::-1]:

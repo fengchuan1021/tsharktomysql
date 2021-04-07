@@ -1,10 +1,15 @@
 ## 需要python3环境
 
+# 1.直接运行
+
 ###### 安装包
 
-pip install pyshark
 pip install fastapi
 pip install uvicorn
+
+sudo apt install tshark
+
+pip install pymysql
 
 ###### 启动服务
 
@@ -20,4 +25,12 @@ print(ret.content)
 ret=session.post('http://192.168.1.36:8080/insert',json={'file_path':'/home/ubuntu/resovepcap/1.pcap','tablename':'fengchuan'})
 print(ret.content)
 ```
+
+# 2.Docker内运行
+
+docker build -t resolvepcap  .
+
+docker run -d --name resolvepcapapi -p 8080:80 -e host=192.168.1.36 -e user=fengchuan -e password=bOelm#Fb2aX -e database=topo_p2p -e port=3306 -v /data/pcaps:/data/pcaps resolvepcap
+
+
 
