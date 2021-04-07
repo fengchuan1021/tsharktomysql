@@ -177,7 +177,8 @@ def query_function(filepath, index, tablename):
         ret = cur.fetchone()
         if ret:
             return {'status': 200, 'data': json.loads(ret[0])}
-    cmd = f'tshark -r {filepath} -Y "frame.number=={index}" -V -T text'
+    #cmd = f'tshark -r {filepath} -Y "frame.number=={index}" -V -T text'
+    cmd=f"editcap -r {filepath} - {index}-{index} | tshark -r - -V -T text"
     tsharkprocess = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, encoding='utf-8')
     out, error = tsharkprocess.communicate()
 
