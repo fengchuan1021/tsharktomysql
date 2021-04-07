@@ -1,11 +1,11 @@
 import requests
 
 session=requests.session()
-ret=session.post('http://192.168.1.92:8080/query',json={'file_path':'1.pcap','index':'1'}).json()
+ret=session.post('http://192.168.1.36:8080/query',json={'file_path':'1.pcap','index':'1','tablename':'ethereum_pcap162'}).json()
 print(ret['data'])
 #
-# # ret=session.post('http://192.168.1.36:8080/insert',json={'file_path':'1.pcap','tablename':'fengchuantttttttt'})
-# # print(ret.content)
+# ret=session.post('http://192.168.1.92:8080/insert',json={'file_path':'1.pcap','tablename':'fengchuantest'})
+# print(ret.content)
 
 # import lxml.etree as ET
 #
