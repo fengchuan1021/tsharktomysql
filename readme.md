@@ -28,11 +28,11 @@ print(ret.content)
 
 # 2.部署到服务器
 
-docker build -t resolvepcap  .
+docker build -t resolvepcapimg  .
 
 数据库配置以命令行方式传给docker内程序
 
-docker run -d --name resolvepcapapi -p 8080:80 -e host=192.168.1.36 -e user=fengchuan -e password=bOelm#Fb2aX -e database=topo_p2p -e port=3306 -v /data/pcaps:/data/pcaps resolvepcap
+docker run -d --name resolvepcapap -p 8080:80 -e host=192.168.1.36 -e user=fengchuan -e password=bOelm#Fb2aX -e database=topo_p2p -e port=3306 -v /data/pcaps:/data/pcaps resolvepcapimg
 
 
 
