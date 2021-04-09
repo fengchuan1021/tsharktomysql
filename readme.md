@@ -1,6 +1,6 @@
 ## 需要python3环境
 
-# 1.直接运行
+# 1.开发测试看，部署项目直接看2
 
 ###### 安装包
 
@@ -26,7 +26,7 @@ ret=session.post('http://192.168.1.36:8080/insert',json={'file_path':'/home/ubun
 print(ret.content)
 ```
 
-# 2.Docker内运行
+# 2.部署到服务器
 
 docker build -t resolvepcap  .
 
