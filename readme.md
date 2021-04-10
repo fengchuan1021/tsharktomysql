@@ -15,8 +15,10 @@ sudo apt install tshark
 pip install pymysql
 
 ###### 启动服务
+通过uvicorn开启服务，main是注入的脚本(作为业务应用逻辑去执行)和 host等是基本配置    
+(/home/ubuntu/conda/bin/uvicorn main:app --host 0.0.0.0 --port 8080)    
 
- nohup /home/ubuntu/conda/bin/uvicorn main:app --host 0.0.0.0 --port 8080 >/dev/null 2>&1 &
+ nohup /home/ubuntu/conda/bin/uvicorn main:app --host 0.0.0.0 --port 8080 >/dev/null 2>&1 &    
 
 ###### 使用方法实例
 直接执行 python3 t.py    
