@@ -1,6 +1,11 @@
 ## 需要python3环境
 
-# 1.开发测试看，部署项目直接看2
+## 用途
+解析pcap文件，并存入数据库    
+分为 1. 开发测试版 和 2. 部署项目版
+
+## 1.开发测试，
+部署项目可以直接看2
 
 ###### 安装包
 
@@ -26,7 +31,7 @@ ret=session.post('http://192.168.1.36:8080/insert',json={'file_path':'/home/ubun
 print(ret.content)
 ```
 
-# 2.部署到服务器
+## 2.部署到服务器
 
 docker build -t resolvepcapimg  .
 
