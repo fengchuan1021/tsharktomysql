@@ -18,13 +18,17 @@ pip install pymysql
 
  nohup /home/ubuntu/conda/bin/uvicorn main:app --host 0.0.0.0 --port 8080 >/dev/null 2>&1 &
 
-###### 使用方法
+###### 使用方法实例
+直接执行 python3 t.py    
 
+t.py文件内容如下
 ```python
 import requests
 session=requests.session()
+#查询
 ret=session.post('http://192.168.1.36:8080/query',json={'file_path':'/home/ubuntu/resovepcap/1.pcap','index':'1'})
 print(ret.content)
+# 解析1.pcap文件，并将解析数据存入对应表中
 ret=session.post('http://192.168.1.36:8080/insert',json={'file_path':'/home/ubuntu/resovepcap/1.pcap','tablename':'fengchuan'})
 print(ret.content)
 ```
