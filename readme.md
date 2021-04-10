@@ -9,12 +9,9 @@
 部署项目可以直接看2
 
 ###### 安装包
-
- pip install fastapi
-pip install uvicorn
-
-sudo apt install tshark
-
+pip install fastapi    
+pip install uvicorn     
+sudo apt install tshark    
 pip install pymysql
 
 ###### 启动服务
