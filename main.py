@@ -5,10 +5,10 @@ from pydantic import BaseModel
 from fastapi import BackgroundTasks, FastAPI
 import json
 import os
-host = "192.168.1.36"
+host = "192.168.1.26"
 user = "fengchuan"
-password = "bOelm#Fb2aX"
-database = "topo_p2p"
+password = "xxxxxx"
+database = "tmp"
 port = 3306
 if os.getenv('host'):
     host = os.getenv('host')
@@ -17,18 +17,7 @@ if os.getenv('host'):
     database = os.getenv('database')
     port = int(os.getenv('port'))
 
-def getlayer_level(packet):
-    for layer in packet.layers[::-1]:
-        if layer.layer_name == 'data':
-            continue
-        elif layer.layer_name in ["tcp" "udp"]:
-            return '传输层'
-        elif layer.layer_name in ["ip", "icmpv6", "icmpv4", "traceroute"]:
-            return "网络层"
-        elif layer.layer_name in ['arp', 'eth']:
-            return '链路层'
 
-        return "应用层"
 
 def createtable(tablename, host, user, password, database):
     connection = pymysql.connect(host=host,
