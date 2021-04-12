@@ -87,6 +87,8 @@ def run_tshark(filename, mysqlprocess):
             hop = 1
             if not arr[3]:
                 arr[3] = b'\\N'
+            if not arr[4]:
+                arr[4] = b'\\N'
             if arr[6]:
                 ttl = int(arr[6])
                 if ttl <= 32:
