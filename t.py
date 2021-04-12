@@ -1,9 +1,9 @@
 import requests
 
 session=requests.session()
-ret=session.post('http://192.168.1.36:8080/insert',json={'file_path':'/data/pcaps/1.pcap','tablename':'test222'})
+ret=session.post('http://192.168.1.36:8082/insert',json={'file_path':'/data/pcaps/1.pcap','tablename':'test_222'})
 print(ret.content)
-ret=session.post('http://192.168.1.36:8080/query',json={'file_path':'/data/pcaps/1.pcap','index':'1','tablename':'test222'}).json()
+ret=session.post('http://192.168.1.36:8082/query',json={'file_path':'/data/pcaps/1.pcap','index':'1','tablename':'test_222'}).json()
 print(ret['data'])
 #
 

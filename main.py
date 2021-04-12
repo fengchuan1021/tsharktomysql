@@ -145,7 +145,9 @@ def process_layer_data(filepath: str, tablename: str):
 
     data = Mydata()
     s = ''
-    while line := t1.stdout.readline():
+    line = t1.stdout.readline()
+    #while line := t1.stdout.readline():
+    while line:
         if line == '\n':
             continue
         if not line.startswith('    '):
@@ -153,7 +155,9 @@ def process_layer_data(filepath: str, tablename: str):
                 data.addchildren('<pre>' + s + "</pre>")
                 s = ''
             if line.startswith("Data"):
-                while tmp := t1.stdout.readline():
+                #while tmp := t1.stdout.readline():
+                tmp = t1.stdout.readline()
+                while tmp:
                     if tmp.startswith("Frame"):
                         data.reset(tmp)
                         break
